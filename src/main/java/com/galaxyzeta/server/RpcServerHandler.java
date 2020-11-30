@@ -2,6 +2,8 @@ package com.galaxyzeta.server;
 
 import java.lang.reflect.Method;
 
+import com.galaxyzeta.common.codec.Serializer;
+import com.galaxyzeta.common.codec.SerializerContainer;
 import com.galaxyzeta.common.protocol.RpcRequest;
 import com.galaxyzeta.common.protocol.RpcResponse;
 
@@ -17,6 +19,8 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
 	private ServiceRegistry serviceRegistry;
 
+	private Serializer serializer = SerializerContainer.getSerializer();
+
 	public RpcServerHandler(ServiceRegistry registry) {
 		this.serviceRegistry = registry;
 	}
@@ -27,10 +31,19 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 		RpcRequest request = msg;
 		LOG.info("Incoming Request: {}", request);
 
+		// Parameter decode
+		Class<?>[] parameters = request.getParameterTypes();
+		Object[] args = request.getArgs();
+		if(args != null) {
+			for(int i=0; i<args.length; i++) {
+				args[i] = serializer.decode(args[i], parameters[i]);
+			}
+		}
+		
 		// Handle
 		RpcResponse response = new RpcResponse();
 		try {
-			Object result = handle(request);
+			Object result = handle(request, response);
 			response.setResult(result);
 		} catch(Exception e) {
 			LOG.warn("While invoking {}, an exception was thrown: {}", request.getFullMethodName(), e.getClass());
@@ -44,7 +57,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 		LOG.info("Response Sent: {}", response);
 	}
 
-	public Object handle(RpcRequest request) throws Exception {
+	public Object handle(RpcRequest request, RpcResponse response) throws Exception {
 		final String serviceKey = request.getServiceKey();
 		Object implBean = serviceRegistry.getInstanceByServiceKey(serviceKey);
 		if (implBean == null) {
@@ -52,6 +65,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 		}
 		Class<?> clazz = implBean.getClass();
 		Method method = clazz.getMethod(request.getMethodName(), request.getParameterTypes());
+		response.setReturnType(method.getReturnType());
 		return method.invoke(implBean, request.getArgs());
 	}
 }

@@ -9,7 +9,7 @@
     
     <context:property-placeholder location="classpath:rpc.properties"/>
 
-    <context:component-scan base-package="com.galaxyzeta.test.service"/>
+    <context:component-scan base-package="com.galaxyzeta"/>
 
     <bean id="curatorConfig" class="com.galaxyzeta.common.zookeeper.CuratorConfig">
         <constructor-arg name="zkAddress" value="${zookeeper.address}"/>

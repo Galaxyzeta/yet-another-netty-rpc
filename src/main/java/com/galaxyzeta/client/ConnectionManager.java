@@ -17,7 +17,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 public class ConnectionManager {
@@ -106,8 +105,10 @@ public class ConnectionManager {
 	}
 
 	public RpcClientHandler chooseConnection(String serviceKey) {
-		RpcServiceGroup group = loadBalancer.route(this.knownServiceMap.get(serviceKey));
-		if (group != null) {
+		List<RpcServiceGroup> grouplist = this.knownServiceMap.get(serviceKey);
+
+		if (grouplist != null && grouplist.size() > 0) {
+			RpcServiceGroup group = loadBalancer.route(grouplist);
 			RpcClientHandler handler;
 			if((handler = connectionMap.get(group)) != null) {
 				return handler;

@@ -1,6 +1,4 @@
-package com.galaxyzeta.common.protocol;
-
-import com.galaxyzeta.common.util.Serializer;
+package com.galaxyzeta.common.codec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +10,9 @@ import io.netty.handler.codec.MessageToByteEncoder;
 public class RpcEncoder extends MessageToByteEncoder<Object> {
 
 	private Class<?> encodeType;
+
+	private Serializer serializer = SerializerContainer.getSerializer();
+	
 	private static final Logger LOG = LoggerFactory.getLogger(RpcDecoder.class);
 
 	public RpcEncoder(Class<?> type) {
@@ -20,7 +21,7 @@ public class RpcEncoder extends MessageToByteEncoder<Object> {
 	
 	@Override
 	protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
-		byte[] data = Serializer.encode(msg);
+		byte[] data = serializer.encode(msg);
 		out.writeInt(data.length);
 		out.writeBytes(data);
 	}

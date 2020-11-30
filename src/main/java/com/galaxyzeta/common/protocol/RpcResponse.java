@@ -9,6 +9,7 @@ public class RpcResponse implements Serializable {
 	
 	private boolean error;
 	private Object result;
+	private Class<?> returnType;
 	private int sessionId;
 	private Throwable throwable;
 
@@ -25,6 +26,9 @@ public class RpcResponse implements Serializable {
 	public Throwable getThrowable() {
 		return throwable;
 	}
+	public Class<?> getReturnType() {
+		return returnType;
+	}
 
 	// == setter ==
 	public void setError(boolean error) {
@@ -38,5 +42,8 @@ public class RpcResponse implements Serializable {
 	}
 	public void setThrowable(Throwable throwable) {
 		this.throwable = throwable;
+	}
+	public void setReturnType(Class<?> returnType) {
+		this.returnType = returnType;
 	}
 }

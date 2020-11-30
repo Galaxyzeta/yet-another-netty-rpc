@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 
 import com.galaxyzeta.common.protocol.RpcRequest;
 import com.galaxyzeta.common.protocol.RpcResponse;
-import com.galaxyzeta.common.util.Constant;
 
 public class ObjectProxy implements InvocationHandler {
 
@@ -22,6 +21,7 @@ public class ObjectProxy implements InvocationHandler {
 		
 		RpcRequest rpcRequest = new RpcRequest();
 		rpcRequest.setArgs(args);
+		rpcRequest.setParameterTypes(method.getParameterTypes());
 		rpcRequest.setServiceName(interfaceClass.getName());
 		rpcRequest.setMethodName(method.getName());
 		rpcRequest.setVersion(version);

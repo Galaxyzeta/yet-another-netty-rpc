@@ -1,13 +1,12 @@
 package com.galaxyzeta.client;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
-import com.galaxyzeta.common.protocol.RpcService;
+import com.galaxyzeta.common.codec.Serializer;
+import com.galaxyzeta.common.codec.SerializerContainer;
 import com.galaxyzeta.common.protocol.RpcServiceGroup;
 import com.galaxyzeta.common.util.Constant;
-import com.galaxyzeta.common.util.Serializer;
 import com.galaxyzeta.common.zookeeper.CuratorClient;
 import com.galaxyzeta.common.zookeeper.CuratorConfig;
 
@@ -16,10 +15,13 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class ServiceDiscovery {
 
 	private CuratorClient curatorClient;
+
+	private Serializer serializer = SerializerContainer.getSerializer();
 
 	private static final Logger LOG = LoggerFactory.getLogger(ServiceDiscovery.class);
 
@@ -27,16 +29,28 @@ public class ServiceDiscovery {
 		curatorClient = new CuratorClient(zkConfig);
 	}
 
-	public void pullLatestService() throws Exception {
+	public void pullLatestService() {
 		LOG.info("Fetching service...");
 		List<RpcServiceGroup> rpcServicesGroups = new ArrayList<>();
-		List<String> servicePaths = curatorClient.getChildrenPathOf(Constant.ZK_DATA);
-
-		for (String singlePath : servicePaths) {
-			RpcServiceGroup serviceGroup = (RpcServiceGroup) Serializer.decode(curatorClient.getNode(singlePath), RpcServiceGroup.class);
-			rpcServicesGroups.add(serviceGroup);
+		try {
+			List<String> servicePaths = curatorClient.getChildrenPathOf(Constant.ZK_DATA);
+			if (servicePaths.size() == 0) {
+				LOG.warn("No services available !");
+			} else {
+				for (String singlePath : servicePaths) {
+					RpcServiceGroup serviceGroup = (RpcServiceGroup) serializer.decode(curatorClient.getNode(singlePath), RpcServiceGroup.class);
+					rpcServicesGroups.add(serviceGroup);
+				}
+				updateKnownRpcConnection(rpcServicesGroups);
+			}
+			addEventListener();
+		} catch (Exception e) {
+			LOG.error("During fetching service, an exception occured: {}", e.getClass());
 		}
-		// Add listener on data path
+		
+	}
+
+	public void addEventListener() throws Exception {
 		curatorClient.addPathChildrenListener(Constant.ZK_DATA, new PathChildrenCacheListener() {
 			@Override
 			public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
@@ -55,8 +69,6 @@ public class ServiceDiscovery {
 				}
 			}
 		});
-
-		updateKnownRpcConnection(rpcServicesGroups);
 	}
 
 	public void updateKnownRpcConnection(List<RpcServiceGroup> serviceGroups) {

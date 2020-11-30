@@ -3,6 +3,8 @@ package com.galaxyzeta.client;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.galaxyzeta.common.codec.Serializer;
+import com.galaxyzeta.common.codec.SerializerContainer;
 import com.galaxyzeta.common.protocol.RpcRequest;
 import com.galaxyzeta.common.protocol.RpcResponse;
 
@@ -18,6 +20,8 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 	private volatile Channel channel;
 	private HashMap<Integer, RpcFuture> pendingRPC = new HashMap<>();
 	private AtomicInteger autoIncrementId = new AtomicInteger();
+	
+	private Serializer serializer = SerializerContainer.getSerializer();
 
 	private static final Logger LOG = LoggerFactory.getLogger(RpcClientHandler.class);
 
@@ -26,25 +30,6 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 		super.channelRegistered(ctx);
 		this.channel = ctx.channel();
 		LOG.info("Client RPC Channel registered ! {}", channel);
-	}
-
-	@Override
-	public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-		super.channelUnregistered(ctx);
-		LOG.info("Client RPC Channel unregistered ! {}");
-	}
-
-	@Override
-	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		super.channelActive(ctx);
-		LOG.info("Client RPC Channel activated !");
-	}
-
-	@Override
-	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		// TODO Auto-generated method stub
-		super.channelInactive(ctx);
-		LOG.info("Client RPC Channel inactivated ! {}");
 	}
 
 	public RpcFuture sendRequest(RpcRequest request) {
@@ -66,6 +51,9 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 		LOG.info("Response received: {}", response);
 		RpcFuture rpcFuture = pendingRPC.get(response.getSessionId());
 		pendingRPC.remove(response.getSessionId());
+
+		response.setResult(serializer.decode(response.getResult(), response.getReturnType()));
 		rpcFuture.done(response);
 	}
+
 }

@@ -16,11 +16,7 @@ public class RpcClient implements ApplicationContextAware, DisposableBean {
 	public ServiceDiscovery discovery;
 	public RpcClient(CuratorConfig zkConfig) {
 		discovery = new ServiceDiscovery(zkConfig);
-		try {
-			discovery.pullLatestService();
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
+		discovery.pullLatestService();
 	}
 
 	@Override

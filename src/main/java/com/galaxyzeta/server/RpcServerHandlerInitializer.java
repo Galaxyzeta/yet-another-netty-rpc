@@ -1,7 +1,7 @@
 package com.galaxyzeta.server;
 
-import com.galaxyzeta.common.protocol.RpcDecoder;
-import com.galaxyzeta.common.protocol.RpcEncoder;
+import com.galaxyzeta.common.codec.RpcDecoder;
+import com.galaxyzeta.common.codec.RpcEncoder;
 import com.galaxyzeta.common.protocol.RpcRequest;
 import com.galaxyzeta.common.protocol.RpcResponse;
 

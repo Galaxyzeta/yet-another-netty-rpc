@@ -10,5 +10,17 @@ public class HelloServiceImpl implements HelloService {
 		System.out.println("Server OK");
 		return "RPC OK";
 	}
+
+	@Override
+	public String hello(String data) {
+		System.out.println("Server OK, data is " + data);
+		return data;
+	}
+
+	@Override
+	public Person person(Person person) {
+		person.setUsername("asd");
+		return person;
+	}
 	
 }
