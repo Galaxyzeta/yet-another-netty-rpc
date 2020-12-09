@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import com.galaxyzeta.common.codec.Serializer;
 import com.galaxyzeta.common.codec.SerializerContainer;
 import com.galaxyzeta.common.protocol.RpcRequest;
+import com.galaxyzeta.common.protocol.RpcRequestType;
 import com.galaxyzeta.common.protocol.RpcResponse;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 
 public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 	
@@ -30,6 +32,12 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 		// Read request
 		RpcRequest request = msg;
 		LOG.info("Incoming Request: {}", request);
+
+		// Incoming heart beat.
+		if(request.getType() == RpcRequestType.BEAT) {
+			LOG.info("Received Heart-Beat from {}", ctx.channel().remoteAddress());
+			return;
+		}
 
 		// Parameter decode
 		Class<?>[] parameters = request.getParameterTypes();
@@ -67,5 +75,20 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 		Method method = clazz.getMethod(request.getMethodName(), request.getParameterTypes());
 		response.setReturnType(method.getReturnType());
 		return method.invoke(implBean, request.getArgs());
+	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		if(evt instanceof IdleStateEvent) {
+			LOG.info("Connection time out with remote peer {}", ctx.channel().remoteAddress());
+		} else {
+			super.userEventTriggered(ctx, evt);
+		}
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		LOG.error("Exception was caught: {}. Closing channel...", cause.getClass());
+		ctx.channel().close();
 	}
 }

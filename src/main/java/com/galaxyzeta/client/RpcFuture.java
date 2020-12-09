@@ -41,4 +41,7 @@ public class RpcFuture {
 		return result;
 	}
 	
+	public RpcResponse asyncGet() throws InterruptedException {
+		return this.response;
+	}
 }

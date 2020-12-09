@@ -22,5 +22,5 @@
         <constructor-arg name="serverPort" value="${server.port}"/>
         <constructor-arg name="serverAddress" value="${server.address}"/>
         <constructor-arg name="curatorConfig" ref="curatorConfig"/>
-    </bean>    
+    </bean>
 </beans>

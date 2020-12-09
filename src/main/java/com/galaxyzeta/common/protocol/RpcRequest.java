@@ -14,6 +14,7 @@ public class RpcRequest implements Serializable {
 	private Class<?>[] parameterTypes;
 	private String version;
 	private int sessionId;
+	private RpcRequestType type = RpcRequestType.REQUEST;
 
 	// == getter ==
 	public Object[] getArgs() {
@@ -37,6 +38,9 @@ public class RpcRequest implements Serializable {
 	public Class<?>[] getParameterTypes() {
 		return parameterTypes;
 	}
+	public RpcRequestType getType() {
+		return type;
+	}
 
 	// == setter ==
 	public void setArgs(Object[] args) {
@@ -57,6 +61,9 @@ public class RpcRequest implements Serializable {
 	}
 	public void setParameterTypes(Class<?>[] parameterTypes) {
 		this.parameterTypes = parameterTypes;
+	}
+	public void setType(RpcRequestType type) {
+		this.type = type;
 	}
 
 	// == Common ==

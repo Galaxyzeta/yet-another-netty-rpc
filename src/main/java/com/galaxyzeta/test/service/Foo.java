@@ -6,4 +6,8 @@ public class Foo {
 	
 	@RpcAutowired(version = "1.0")
 	private HelloService helloService;
+
+	public HelloService getHelloService() {
+		return helloService;
+	}
 }

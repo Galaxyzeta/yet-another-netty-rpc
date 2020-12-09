@@ -1,5 +1,6 @@
 package com.galaxyzeta.client;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,6 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class ServiceDiscovery {
 
@@ -73,5 +73,6 @@ public class ServiceDiscovery {
 
 	public void updateKnownRpcConnection(List<RpcServiceGroup> serviceGroups) {
 		ConnectionManager.getInstance().updateAvailableServices(serviceGroups);
+		ConnectionManager.getInstance().signalAvailableService();
 	}
 }
