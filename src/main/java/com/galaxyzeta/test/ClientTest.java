@@ -14,5 +14,10 @@ public class ClientTest {
 		System.out.println(service.hello());
 		System.out.println(service.hello("asd"));
 		System.out.println(service.person(new Person()));
+		System.out.println("Sleep for 5 secs");
+		Thread.sleep(1000 * 5);
+		System.out.println(service.hello());
+		System.out.println(service.hello("asd"));
+		System.out.println(service.person(new Person()));
 	}
 }

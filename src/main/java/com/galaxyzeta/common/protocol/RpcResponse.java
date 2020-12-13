@@ -46,4 +46,10 @@ public class RpcResponse implements Serializable {
 	public void setReturnType(Class<?> returnType) {
 		this.returnType = returnType;
 	}
+
+	// == tostring ==
+	@Override
+	public String toString() {
+		return String.format("RpcResponse{id=%s, error=%s, result=%s, type=%s, throwable=%s}", sessionId, error, result, returnType, throwable);
+	}
 }

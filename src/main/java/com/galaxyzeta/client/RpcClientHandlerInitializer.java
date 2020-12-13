@@ -4,6 +4,7 @@ import com.galaxyzeta.common.codec.RpcDecoder;
 import com.galaxyzeta.common.codec.RpcEncoder;
 import com.galaxyzeta.common.protocol.RpcRequest;
 import com.galaxyzeta.common.protocol.RpcResponse;
+import com.galaxyzeta.common.protocol.RpcServiceGroup;
 import com.galaxyzeta.common.util.BeatUtil;
 
 import io.netty.channel.Channel;
@@ -13,6 +14,12 @@ import io.netty.handler.timeout.IdleStateHandler;
 
 public class RpcClientHandlerInitializer extends ChannelInitializer<Channel> {
 
+	private RpcServiceGroup serviceGroup;
+
+	public RpcClientHandlerInitializer(RpcServiceGroup serviceGroup) {
+		this.serviceGroup = serviceGroup;
+	}
+
 	@Override
 	protected void initChannel(Channel ch) throws Exception {
 		ChannelPipeline pip = ch.pipeline();
@@ -20,7 +27,7 @@ public class RpcClientHandlerInitializer extends ChannelInitializer<Channel> {
 		pip.addLast(new IdleStateHandler(0, 0, BeatUtil.BEAT_KEEP_ALIVE));
 		pip.addLast(new RpcDecoder(RpcResponse.class));
 		pip.addLast(new RpcEncoder(RpcRequest.class));
-		pip.addLast(new RpcClientHandler());
+		pip.addLast(new RpcClientHandler(serviceGroup));
 
 	}
 	

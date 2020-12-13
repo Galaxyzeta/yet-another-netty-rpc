@@ -81,6 +81,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		if(evt instanceof IdleStateEvent) {
 			LOG.info("Connection time out with remote peer {}", ctx.channel().remoteAddress());
+			ctx.close();
 		} else {
 			super.userEventTriggered(ctx, evt);
 		}
@@ -90,5 +91,6 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		LOG.error("Exception was caught: {}. Closing channel...", cause.getClass());
 		ctx.channel().close();
+		LOG.info("Channel closed: {}", ctx.channel().remoteAddress());
 	}
 }

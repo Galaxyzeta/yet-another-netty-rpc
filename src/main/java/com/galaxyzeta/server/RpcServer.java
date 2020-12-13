@@ -24,12 +24,15 @@ public class RpcServer implements ApplicationContextAware, DisposableBean {
 
 	private int serverPort;
 
+	private int serverTimeout;
+
 	private static final Logger LOG = LoggerFactory.getLogger(RpcServer.class);
 
 	private ServiceRegistry registry;
 
-	public RpcServer(String serverAddress, int serverPort, CuratorConfig curatorConfig) {
+	public RpcServer(String serverAddress, int serverPort, int serverTimeout, CuratorConfig curatorConfig) {
 		this.serverPort = serverPort;
+		this.serverTimeout = serverTimeout;
 		registry = new ServiceRegistry(serverAddress, serverPort, curatorConfig);
 	}
 
@@ -40,7 +43,7 @@ public class RpcServer implements ApplicationContextAware, DisposableBean {
 		try {
 			ServerBootstrap bootstrap = new ServerBootstrap();
 			bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
-					.childHandler(new RpcServerHandlerInitializer(registry));
+					.childHandler(new RpcServerHandlerInitializer(registry, serverTimeout));
 			LOG.info("Server started...");
 
 			registry.publishService();

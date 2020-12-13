@@ -1,11 +1,10 @@
 package com.galaxyzeta.client;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,9 +23,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 public class ConnectionManager {
 
-	private HashMap<String, List<RpcServiceGroup>> knownServiceMap = new HashMap<>();
-	private HashSet<RpcServiceGroup> knownServiceGroups = new HashSet<>();
-	private HashMap<RpcServiceGroup, RpcClientHandler> connectionMap = new HashMap<>();
+	private ConcurrentHashMap<String, List<RpcServiceGroup>> knownServiceMap = new ConcurrentHashMap<>();
+	private CopyOnWriteArraySet<RpcServiceGroup> knownServiceGroups = new CopyOnWriteArraySet<>();
+	private ConcurrentHashMap<RpcServiceGroup, RpcClientHandler> connectionMap = new ConcurrentHashMap<>();
 	private NioEventLoopGroup worker = new NioEventLoopGroup();
 	private RpcLoadBalancer loadBalancer = new RpcRandomBalancer();
 
@@ -67,12 +66,11 @@ public class ConnectionManager {
 		}
 
 		updateServiceMap();
-		
 	}
 
 	private void updateServiceMap() {
 		// Make new service map
-		HashMap<String, List<RpcServiceGroup>> serviceMap = new HashMap<>();
+		ConcurrentHashMap<String, List<RpcServiceGroup>> serviceMap = new ConcurrentHashMap<>();
 		for(RpcServiceGroup group: knownServiceGroups) {
 			List<RpcService> services = group.getServiceInfoList();
 			for(RpcService service: services) {
@@ -89,10 +87,16 @@ public class ConnectionManager {
 		this.knownServiceMap = serviceMap;
 	}
 
+	/**
+	 * Connect to a remote service provider, add a new K-V pair into the connection map.
+	 * @param group
+	 * @return the Rpc handler that copes with the remote server.
+	 * @throws Exception
+	 */
 	public RpcClientHandler connectServiceGroup(RpcServiceGroup group) throws Exception {
 		
 		Bootstrap boot = new Bootstrap();
-		RpcClientHandlerInitializer initializer = new RpcClientHandlerInitializer();
+		RpcClientHandlerInitializer initializer = new RpcClientHandlerInitializer(group);
 		boot.group(worker)
 			.channel(NioSocketChannel.class)
 			.handler(initializer);
@@ -110,6 +114,11 @@ public class ConnectionManager {
 		
 	}
 
+	/**
+	 * Choose a client handler by the given serviceKey.
+	 * @param serviceKey
+	 * @return routed RpcClientHandler
+	 */
 	public RpcClientHandler chooseConnection(String serviceKey) {
 
 		// No service available, need to wait...
@@ -137,6 +146,9 @@ public class ConnectionManager {
 		}
 	}
 
+	/**
+	 * ZK registry is empty, wait on the given condition until signalAvailable Service is called.
+	 */
 	private void waitForAvailableService() {
 		lock.lock();
 		try {
@@ -147,10 +159,29 @@ public class ConnectionManager {
 		}
 	}
 
+	/**
+	 * Indicates that new service has arrived at ZK registry.
+	 */
 	public void signalAvailableService() {
-		serivceAvailableCondition.signalAll();
+		lock.lock();
+		try {
+			serivceAvailableCondition.signalAll();
+		} finally {
+			lock.unlock();
+		}
 	}
 
+	/**
+	 * Remove connection group of a certain serviceGroup when a netty channel is unregistered.
+	 * @param serviceGroup
+	 */
+	public void closeConnection(RpcServiceGroup serviceGroup) {
+		connectionMap.remove(serviceGroup);
+	}
+
+	/**
+	 * Close all connections, gracefully.
+	 */
 	public void shutdownAllConnections() {
 		worker.shutdownGracefully();
 	}

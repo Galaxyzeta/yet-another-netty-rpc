@@ -70,4 +70,12 @@ public class RpcRequest implements Serializable {
 	public String getFullMethodName() {
 		return this.getServiceKey() + "|" + this.methodName;
 	}
+
+	// == tostring ==
+	@Override
+	public String toString() {
+		if (type == RpcRequestType.BEAT)
+			return String.format("Beat{}");
+		return String.format("RpcRequest{id=%s, target=%s, args=%s, types=%s}", sessionId, getFullMethodName(), args, parameterTypes);
+	}
 }

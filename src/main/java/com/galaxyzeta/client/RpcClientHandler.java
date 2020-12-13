@@ -7,6 +7,7 @@ import com.galaxyzeta.common.codec.Serializer;
 import com.galaxyzeta.common.codec.SerializerContainer;
 import com.galaxyzeta.common.protocol.RpcRequest;
 import com.galaxyzeta.common.protocol.RpcResponse;
+import com.galaxyzeta.common.protocol.RpcServiceGroup;
 import com.galaxyzeta.common.util.BeatUtil;
 
 import org.slf4j.Logger;
@@ -22,10 +23,16 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 	private volatile Channel channel;
 	private HashMap<Integer, RpcFuture> pendingRPC = new HashMap<>();
 	private AtomicInteger autoIncrementId = new AtomicInteger();
+
+	private RpcServiceGroup serviceGroup;
 	
 	private Serializer serializer = SerializerContainer.getSerializer();
 
 	private static final Logger LOG = LoggerFactory.getLogger(RpcClientHandler.class);
+
+	public RpcClientHandler(RpcServiceGroup serviceGroup) {
+		this.serviceGroup = serviceGroup;
+	}
 
 	@Override
 	public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -73,9 +80,18 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 	}
 
 	@Override
+	/**
+	 * Trigger when server closed the channel. Need to unregister ConnctionManager's connection data.
+	 */
+	public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+		LOG.warn("Channel closed...");
+		ConnectionManager.getInstance().closeConnection(serviceGroup);
+		super.channelUnregistered(ctx);
+	}
+
+	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		LOG.error("Exception was caught: {}. Closing channel...", cause.getClass());
 		ctx.channel().close();
 	}
-
 }

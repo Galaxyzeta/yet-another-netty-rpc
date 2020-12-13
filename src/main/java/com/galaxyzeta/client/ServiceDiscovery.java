@@ -1,6 +1,5 @@
 package com.galaxyzeta.client;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
